@@ -1,13 +1,30 @@
 import re
 import os
-import msvcrt
+import sys
+import platform
 
-os.system('mode con: cols=200 lines=80')
+#OS Detection
+is_windows = platform.system() == "Windows"
+is_linux = platform.system() == "Linux"
 
-local_appdata = os.environ['LOCALAPPDATA']
-log_file = os.path.join(local_appdata, "Warframe", "EE.log")
+# Resize terminal (Windows only)
+if is_windows:
+    os.system('mode con: cols=200 lines=80')
 
-loglist = open(log_file, "r", encoding="ansi").read().split('\n')
+if is_windows:
+    local_appdata = os.environ.get('LOCALAPPDATA')
+    log_file = os.path.join(local_appdata, "Warframe", "EE.log")
+else:
+    # Adjust path for Proton/Steam on Linux
+    log_file = os.path.expanduser("~/.local/share/Steam/steamapps/compatdata/230410/pfx/drive_c/users/steamuser/AppData/Local/Warframe/EE.log")
+
+try:
+    with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+        loglist = f.read().split('\n')
+except FileNotFoundError:
+    print(f"Log File not found at: {log_file}")
+    exit(1)
+
 substring = "Damage too high:"
 substring2 = "Damaging dead avatar"
 
@@ -68,5 +85,11 @@ print("The in-game number says you dealt", display_number, "damage")
 print("You actually dealt:", damage_number, "damage.")
 print(f"Found on line {line_number} of log.")
 print('\n')
-print("Press any key to exit")
-msvcrt.getch()
+
+# Cross-platform wait for user input
+if is_windows:
+    import msvcrt
+    print("Press any key to exit...")
+    msvcrt.getch()
+else:
+    input("Press Enter to exit...")
